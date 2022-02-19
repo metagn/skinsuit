@@ -20,4 +20,6 @@ assert Value(kind: Integer, integer: 1) == Integer(1)
 assert Value(kind: Boolean, integer: 1) == Boolean(1)
 assert Value(kind: Unsigned, unsigned: 1) == Unsigned(1)
 assert Value(kind: Float, float: 1) == Float(1)
+
+# see tests/docs for other macros
 ```
