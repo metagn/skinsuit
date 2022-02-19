@@ -1,4 +1,4 @@
-import unions/unionfield
+import variantsugar/unionfield
 
 block:
   type Foo {.unionField.} = ref object

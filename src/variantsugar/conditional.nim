@@ -1,17 +1,16 @@
 ## object variants generalized to any condition for each possible union value
 
 runnableExamples:
-  conditionalUnion:
-    type Foo = ref object
-      num: int
-      case branch: _ # type has to be _, all types without a case branch with _ as discriminator type are kept in the type section
-      # the name "branch" can be changed or made _ in which case it defaults to "branch" for now
-      of Odd, num mod 2 == 1: # branch names can also be _
-        name: string
-      of DoubleEven, num mod 4 == 0:
-        a, b: int
-      of Even:
-        a: int # duplicate names are allowed, only the accessors care that they have the same type
+  type Foo {.conditional.} = ref object
+    num: int
+    case branch: _ # type has to be _, all types without a case branch with _ as discriminator type are kept in the type section
+    # the name "branch" can be changed or made _ in which case it defaults to "branch" for now
+    of Odd, num mod 2 == 1: # branch names can also be _
+      name: string
+    of DoubleEven, num mod 4 == 0:
+      a, b: int
+    of Even:
+      a: int # duplicate names are allowed, only the accessors care that they have the same type
 
   var foo = Foo(num: 1)
   foo.name = "abc"
@@ -216,8 +215,7 @@ proc patchTypeSection(typesec: NimNode, poststmts: var seq[NimNode]) =
                           newLit("object is not of branch " & names.join(" or ") & " and therefore does not have field `" & fieldName & "`"))))
                       ifstmt.add(raiser)
                       setter.add(raiser)
-                    let gettername = if (r[i].kind == nnkPragmaExpr and r[i][0].kind == nnkPostfix) or r[i].kind == nnkPostfix:
-                        postfix(ident(fieldName), "*") else: ident(fieldName)
+                    let gettername = ident(fieldName).exportIf(r[i].isNodeExported)
                     poststmts.add(newProc(
                       name = gettername,
                       params = [r[^2], newIdentDefs(ident"self", ident(typeName))],
@@ -225,8 +223,7 @@ proc patchTypeSection(typesec: NimNode, poststmts: var seq[NimNode]) =
                       procType = nnkProcDef,
                       pragmas = used
                     ))
-                    let settername = if (r[i].kind == nnkPragmaExpr and r[i][0].kind == nnkPostfix) or r[i].kind == nnkPostfix:
-                        postfix(newTree(nnkAccQuoted, ident(fieldName), ident"="), "*") else: newTree(nnkAccQuoted, ident(fieldName), ident"=")
+                    let settername = newTree(nnkAccQuoted, ident(fieldName), ident"=").exportIf(r[i].isNodeExported)
                     poststmts.add(newProc(
                       name = settername,
                       params = [newEmptyNode(), newIdentDefs(ident"self", newTree(nnkVarTy, ident(typeName))), newIdentDefs(setterValue, r[^2])],
@@ -248,8 +245,7 @@ proc patchTypeSection(typesec: NimNode, poststmts: var seq[NimNode]) =
                 for i in 0 .. r.len - 3:
                   let fieldName = r[i].realBasename
                   if fieldName notin doneFields:
-                    let gettername = if (r[i].kind == nnkPragmaExpr and r[i][0].kind == nnkPostfix) or r[i].kind == nnkPostfix:
-                        postfix(ident(fieldName), "*") else: ident(fieldName)
+                    let gettername = ident(fieldName).exportIf(r[i].isNodeExported)
                     # somewhat unsafe
                     let body = newDotExpr(newDotExpr(newDotExpr(ident"self", unionFieldName), defaultBranch.fieldname), ident(fieldName))
                     poststmts.add(newProc(
@@ -261,8 +257,7 @@ proc patchTypeSection(typesec: NimNode, poststmts: var seq[NimNode]) =
                     ))
                     let setterValue = genSym(nskParam, "value")
                     let setter = body.newAssignment(setterValue)
-                    let settername = if (r[i].kind == nnkPragmaExpr and r[i][0].kind == nnkPostfix) or r[i].kind == nnkPostfix:
-                        postfix(newTree(nnkAccQuoted, ident(fieldName), ident"="), "*") else: newTree(nnkAccQuoted, ident(fieldName), ident"=")
+                    let settername = newTree(nnkAccQuoted, ident(fieldName), ident"=").exportIf(r[i].isNodeExported)
                     poststmts.add(newProc(
                       name = settername,
                       params = [newEmptyNode(), newIdentDefs(ident"self", newTree(nnkVarTy, ident(typeName))), newIdentDefs(setterValue, r[^2])],
@@ -272,5 +267,5 @@ proc patchTypeSection(typesec: NimNode, poststmts: var seq[NimNode]) =
                     ))
     inc typedefIndex
 
-macro conditionalUnion*(body) =
+macro conditional*(body) =
   result = applyTypeMacro(body, patchTypeSection)

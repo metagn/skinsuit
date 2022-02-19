@@ -2,7 +2,7 @@
 
 version       = "0.1.0"
 author        = "metagn"
-description   = "object variants utilities"
+description   = "utility macros mostly for object variants"
 license       = "MIT"
 srcDir        = "src"
 
@@ -18,14 +18,12 @@ when (NimMajor, NimMinor) >= (1, 4):
 
 task docs, "build docs for all modules":
   when declared(buildDocs):
-    buildDocs(gitUrl = "https://github.com/metagn/unions")
+    buildDocs(gitUrl = "https://github.com/metagn/variantsugar")
   else:
     echo "docs task not implemented, need nimbleutils"
 
 task tests, "run tests for multiple backends and defines":
   when declared(runTests):
-    runTests(
-      backends = {c, #[js]#},
-    )
+    runTests(backends = {c, js, nims})
   else:
     echo "tests task not implemented, need nimbleutils"

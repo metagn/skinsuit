@@ -7,6 +7,22 @@ proc uncapitalizeAscii*(s: string): string =
 proc realBasename*(n: NimNode): string =
   $(if n.kind in {nnkPostfix, nnkPragmaExpr}: n.basename else: n)
 
+proc isNodeExported*(n: NimNode): bool =
+  case n.kind
+  of nnkPostfix: true
+  of nnkPragmaExpr: isNodeExported(n[0])
+  else: false
+
+proc exportIf*(n: NimNode, b: bool): NimNode =
+  case n.kind
+  of nnkPostfix:
+    result = n
+  of nnkPragmaExpr:
+    result = copy(n)
+    result[0] = result[0].exportIf(b)
+  else:
+    result = if b: postfix(n, "*") else: n
+
 proc replaceIdent*(n: NimNode, name: string, to: NimNode) =
   if n.kind != nnkAccQuoted:
     for i in 1 ..< n.len:
@@ -54,7 +70,7 @@ proc applyTypeMacro*(body: NimNode, p: proc (typeSection: NimNode, poststmts: va
   var poststmts: seq[NimNode]
   p(typeSec, poststmts)
   if inTypeSection:
-    if poststmts.len == 0 and typeSec.len == 1:
+    if typeSec.len == 1 and poststmts.len == 0:
       result = typeSec[0]
     else:
       result = newTree(nnkTypeDef, genSym(nskType, "_"), newEmptyNode(),
