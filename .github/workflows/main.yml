@@ -1,0 +1,61 @@
+name: variantsugar
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jiro4989/setup-nim-action@v1
+
+      - name: install nimbleutils
+        run: nimble install -y https://github.com/metagn/nimbleutils@#HEAD
+      
+      - name: install dependencies
+        run: nimble install -y
+
+      - name: run tests
+        run: nimble tests
+  
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jiro4989/setup-nim-action@v1
+
+      - name: install nimbleutils
+        run: nimble install -y https://github.com/metagn/nimbleutils@#HEAD
+      
+      - name: install dependencies
+        run: nimble install -y
+      
+      - name: compile docs
+        run: nimble docs
+      
+      - name: move to subfolder
+        run: |
+          mkdir pages
+          mv docs pages/
+          cd pages
+          git init
+          git add -A
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m 'deploy'
+      
+      - name: push to branch
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
+          force: true
+          directory: ./pages/
