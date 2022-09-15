@@ -59,3 +59,4 @@ jobs:
           branch: gh-pages
           force: true
           directory: ./pages/
+        if: github.event_name != 'pull_request'
