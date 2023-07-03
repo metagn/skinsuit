@@ -1,2 +1,2 @@
-import variantsugar/[conditional, sum, unionfield, equals]
-export conditional, sum, unionfield, equals
+import variantsugar/[conditional, sum, unionfield, equals, dispatch]
+export conditional, sum, unionfield, equals, dispatch
