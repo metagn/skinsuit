@@ -78,7 +78,13 @@ proc doDispatchCase(arg, prc: NimNode): NimNode =
   var argTypImpl = getTypeImpl(argTyp)
   while not argTypImpl.isNil and argTypImpl.kind != nnkObjectTy:
     case argTypImpl.kind
-    of nnkRefTy, nnkPtrTy: argTypImpl = argTypImpl[0]
+    of nnkRefTy, nnkPtrTy, nnkVarTy: argTypImpl = argTypImpl[0]
+    of nnkCallKinds:
+      if argTypImpl.len == 2 and argTypImpl[0].kind in {nnkSym, nnkIdent} and
+          $argTyp[0] in ["sink", "lent"]:
+        argTypImpl = argTypImpl[0]
+      else:
+        error("not an object type for dispatchCase", argTyp)
     else:
       let newImpl = getTypeImpl(argTypImpl)
       if newImpl == argTypImpl:
