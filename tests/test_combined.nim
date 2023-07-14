@@ -1,4 +1,4 @@
-import variantsugar/[sum, equals, dispatch]
+import skinsuit/[sum, equals, dispatch]
 
 block:
   type Value {.sum, equals.} = object

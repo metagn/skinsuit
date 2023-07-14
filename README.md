@@ -1,9 +1,9 @@
-# variantsugar
+# skinsuit
 
 Utility macros mostly for object variants
 
 ```nim
-import variantsugar
+import skinsuit
 
 type Value {.sum, equals.} = object 
   case kind: _

@@ -1,4 +1,4 @@
-import variantsugar/unionfield
+import skinsuit/unionfield
 
 block:
   type Foo {.unionField.} = ref object

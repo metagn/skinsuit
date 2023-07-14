@@ -1,5 +1,9 @@
 ## object variants generalized to any condition for each possible union value
 
+# todo use custom {.union.} implementation for JS and nimscript
+# for JS, can be `distinct JsRoot` that gets `cast`
+# for nimscript, can be `pointer` that gets `cast`?
+
 runnableExamples:
   type Foo {.conditional.} = ref object
     num: int

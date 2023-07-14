@@ -1,4 +1,4 @@
-import variantsugar/dispatch
+import skinsuit/dispatch
 
 block: # on parameter name
   type Foo = object
@@ -75,7 +75,7 @@ block: # first parameter
   addStr(f, s)
   doAssert s == @["int 0", "float 1.2", "float 3.4", "int 567"]
 
-import variantsugar/sum
+import skinsuit/sum
 
 block: # combined
   type Value {.sum.} = object

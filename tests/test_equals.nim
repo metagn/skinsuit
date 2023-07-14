@@ -1,4 +1,4 @@
-import variantsugar/equals
+import skinsuit/equals
 
 block:
   type Foo {.equals.} = object

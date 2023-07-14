@@ -1,5 +1,5 @@
 when not defined(js) and not defined(nimscript):
-  import variantsugar/conditional
+  import skinsuit/conditional
 
   conditional:
     type Foo = ref object

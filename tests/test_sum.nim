@@ -1,4 +1,4 @@
-import variantsugar/sum
+import skinsuit/sum
 
 block:
   sum:
