@@ -170,11 +170,17 @@ proc patchTypeSection(typesec: NimNode, poststmts: var seq[NimNode]) =
                 pragmas = used
               )
             )
+          let selfUnionField = newDotExpr(ident"self", unionFieldName)
           poststmts.add(
             newProc(
               name = ident("reset" & capitalizedBranch).exportIfBranchExported,
               params = [newEmptyNode(), newIdentDefs(ident"self", newTree(nnkVarTy, ident(typeName)))],
-              body = newCall("reset", newDotExpr(ident"self", unionFieldName)),
+              body =
+                when false:
+                  # xxx reset the field of the union based on the current branch
+                  newCall("reset", newDotExpr(ident"self", unionFieldName))
+                else:
+                  newCall("zeroMem", newCall("addr", selfUnionField), newCall("sizeof", selfUnionField)),
               pragmas = used))
           proc hasField(reclist: NimNode, field: string): bool =
             for r in reclist:
