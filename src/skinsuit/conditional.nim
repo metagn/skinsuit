@@ -1,4 +1,6 @@
 ## object variants generalized to any condition for each possible union value
+## 
+## currently uses {.union.} (in the future it may change), so can be buggy with memory managed types
 
 # todo use custom {.union.} implementation for JS and nimscript
 # for JS, can be `distinct JsRoot` that gets `cast`
@@ -30,6 +32,9 @@ runnableExamples:
   foo.b = 4
   doAssert foo.b == 4
   doAssert foo.branch == DoubleEven
+  foo.resetBranch()
+  doAssert foo.a == 0
+  doAssert foo.b == 0
 
 import macros, strutils, sets, private/utils
 
