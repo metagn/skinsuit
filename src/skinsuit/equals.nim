@@ -15,6 +15,9 @@ runnableExamples:
 
 import macros, private/utils
 
+template same(a, b: ref | ptr): bool =
+  system.`==`(a, b)
+
 proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode =
   proc generateEquals(sl: NimNode, field: NimNode) =
     case field.kind
@@ -48,8 +51,9 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode
     else: discard
   let equalsBody = newStmtList()
   if ptrLike:
+    let same = bindSym"same"
     equalsBody.add quote do:
-      if cast[pointer](a) == cast[pointer](b):
+      if `same`(a, b): # covers both nil case
         return true
       if a.isNil or b.isNil:
         return false
