@@ -37,6 +37,8 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode
         branch[^1] = newStmtList()
         for r in b[^1]:
           generateEquals(branch[^1], r)
+        if branch[^1].len == 0:
+          branch[^1].add(newTree(nnkDiscardStmt, newEmptyNode()))
         cs.add(branch)
       sl.add(cs)
     of nnkRecWhen:
@@ -46,6 +48,8 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode
         branch[^1] = newStmtList()
         for r in b[^1]:
           generateEquals(branch[^1], r)
+        if branch[^1].len == 0:
+          branch[^1].add(newTree(nnkDiscardStmt, newEmptyNode()))
         ws.add(branch)
       sl.add(ws)
     else: discard
@@ -69,6 +73,7 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode
     newTree(nnkPragmaBlock,
       newTree(nnkPragma, noSideEffectPragma),
       equalsBody))
+  echo equalsBody.treeRepr
   newProc(
     name = ident"==".exportIf(doExport),
     params = [ident"bool", newTree(nnkIdentDefs, ident"a", ident"b", typeName, newEmptyNode())],

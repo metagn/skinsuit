@@ -16,7 +16,11 @@ block:
 block:
   type
     Bar = ref object
-      x: Foo
+      case a: bool
+      of false:
+        x: Foo
+      else:
+        discard
     Foo = object
       name: string
       bar: Bar
@@ -26,7 +30,7 @@ block:
       of true:
         b: float
 
-  proc `==`(a, b: Foo): bool
+  proc `==`(a, b: Foo): bool {.noSideEffect.}
   
   equals Bar
   equals Foo
@@ -34,5 +38,5 @@ block:
   doAssert Foo(name: "abc", kind: false, a: 1) == Foo(name: "abc", kind: false, a: 1)
   doAssert Foo(name: "abc", kind: false, a: 1) != Foo(name: "abc", kind: true, b: 1)
   doAssert Foo(name: "abc", kind: false, a: 1) != Foo(name: "def", kind: false, a: 1)
-  doAssert Bar(x: Foo(name: "abc")) == Bar(x: Foo(name: "abc"))
-  doAssert Bar(x: Foo(name: "abc")) != Bar(x: Foo(name: "def"))
+  doAssert Bar(a: false, x: Foo(name: "abc")) == Bar(a: false, x: Foo(name: "abc"))
+  doAssert Bar(a: false, x: Foo(name: "abc")) != Bar(a: false, x: Foo(name: "def"))
