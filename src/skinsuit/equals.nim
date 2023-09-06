@@ -73,7 +73,7 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode
     name = ident"==".exportIf(doExport),
     params = [ident"bool", newTree(nnkIdentDefs, ident"a", ident"b", typeName, newEmptyNode())],
     body = equalsBody,
-    pragmas = newTree(nnkPragma, ident"used")
+    pragmas = newTree(nnkPragma, ident"used", ident"noSideEffect")
   )
 
 proc patchTypeSection(typeSec: NimNode, poststmts: var seq[NimNode]) =
