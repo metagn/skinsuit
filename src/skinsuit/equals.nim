@@ -32,14 +32,23 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode
         if a.`kf` != b.`kf`:
           return false
       let cs = newTree(nnkCaseStmt, newDotExpr(ident"a", kf))
+      var needsEmptyElse = false
       for b in field[1 .. ^1]:
         let branch = copy b
+        for i in 0 ..< b.len - 1:
+          if branch[i].kind == nnkRange or
+              (branch[i].kind == nnkInfix and branch[i][0].eqIdent".."):
+            # https://github.com/nim-lang/Nim/issues/22661
+            # if the issue is fixed, this block needs to be disabled
+            needsEmptyElse = true
         branch[^1] = newStmtList()
         for r in b[^1]:
           generateEquals(branch[^1], r)
         if branch[^1].len == 0:
           branch[^1].add(newTree(nnkDiscardStmt, newEmptyNode()))
         cs.add(branch)
+      if needsEmptyElse:
+        cs.add(newTree(nnkElse, newTree(nnkDiscardStmt, newEmptyNode())))
       sl.add(cs)
     of nnkRecWhen:
       let ws = newTree(nnkWhenStmt)
