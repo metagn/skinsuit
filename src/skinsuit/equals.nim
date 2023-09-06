@@ -73,7 +73,6 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode
     newTree(nnkPragmaBlock,
       newTree(nnkPragma, noSideEffectPragma),
       equalsBody))
-  echo equalsBody.treeRepr
   newProc(
     name = ident"==".exportIf(doExport),
     params = [ident"bool", newTree(nnkIdentDefs, ident"a", ident"b", typeName, newEmptyNode())],
