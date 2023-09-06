@@ -49,7 +49,7 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode
         ws.add(branch)
       sl.add(ws)
     else: discard
-  let equalsBody = newStmtList()
+  var equalsBody = newStmtList()
   if ptrLike:
     let same = bindSym"same"
     equalsBody.add quote do:
@@ -60,6 +60,15 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode
   for r in objectNode[^1]:
     generateEquals(equalsBody, r)
   equalsBody.add(newTree(nnkReturnStmt, ident"true"))
+  let noSideEffectPragma =
+    when (NimMajor, NimMinor) >= (1, 6):
+      newTree(nnkCast, newEmptyNode(), ident"noSideEffect")
+    else:
+      ident"noSideEffect"
+  equalsBody = newStmtList(
+    newTree(nnkPragmaBlock,
+      newTree(nnkPragma, noSideEffectPragma),
+      equalsBody))
   newProc(
     name = ident"==".exportIf(doExport),
     params = [ident"bool", newTree(nnkIdentDefs, ident"a", ident"b", typeName, newEmptyNode())],
