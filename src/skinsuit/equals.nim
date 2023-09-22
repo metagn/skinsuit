@@ -18,7 +18,7 @@ import macros, private/utils
 template same(a, b: ref | ptr): bool =
   system.`==`(a, b)
 
-proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode =
+proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike, forwardDecl: bool): NimNode =
   proc generateEquals(sl: NimNode, field: NimNode) =
     case field.kind
     of nnkIdentDefs:
@@ -62,26 +62,30 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike: bool): NimNode
         ws.add(branch)
       sl.add(ws)
     else: discard
-  var equalsBody = newStmtList()
-  if ptrLike:
-    let same = bindSym"same"
-    equalsBody.add quote do:
-      if `same`(a, b): # covers both nil case
-        return true
-      if a.isNil or b.isNil:
-        return false
-  for r in objectNode[^1]:
-    generateEquals(equalsBody, r)
-  equalsBody.add(newTree(nnkReturnStmt, ident"true"))
-  let noSideEffectPragma =
-    when (NimMajor, NimMinor) >= (1, 6):
-      newTree(nnkCast, newEmptyNode(), ident"noSideEffect")
-    else:
-      ident"noSideEffect"
-  equalsBody = newStmtList(
-    newTree(nnkPragmaBlock,
-      newTree(nnkPragma, noSideEffectPragma),
-      equalsBody))
+  var equalsBody: NimNode
+  if forwardDecl:
+    equalsBody = newEmptyNode()
+  else:
+    equalsBody = newStmtList()
+    if ptrLike:
+      let same = bindSym"same"
+      equalsBody.add quote do:
+        if `same`(a, b): # covers both nil case
+          return true
+        if a.isNil or b.isNil:
+          return false
+    for r in objectNode[^1]:
+      generateEquals(equalsBody, r)
+    equalsBody.add(newTree(nnkReturnStmt, ident"true"))
+    let noSideEffectPragma =
+      when (NimMajor, NimMinor) >= (1, 6):
+        newTree(nnkCast, newEmptyNode(), ident"noSideEffect")
+      else:
+        ident"noSideEffect"
+    equalsBody = newStmtList(
+      newTree(nnkPragmaBlock,
+        newTree(nnkPragma, noSideEffectPragma),
+        equalsBody))
   newProc(
     name = ident"==".exportIf(doExport),
     params = [ident"bool", newTree(nnkIdentDefs, ident"a", ident"b", typeName, newEmptyNode())],
@@ -99,9 +103,9 @@ proc patchTypeSection(typeSec: NimNode, poststmts: var seq[NimNode]) =
     if objectNode.kind == nnkObjectTy:
       let doExport = td[0].isNodeExported
       let typeName = td[0].realBasename
-      poststmts.add(equalsProc(ident(typeName), objectNode, doExport, ptrLike))
+      poststmts.add(equalsProc(ident(typeName), objectNode, doExport, ptrLike, false))
 
-macro equalsExistingType(t, T: typed, exported: static bool) =
+macro equalsExistingType(t, T: typed, exported: static bool, forwardDecl: static bool) =
   var objectNode = t.getTypeImpl
   var ptrLike = false
   while true:
@@ -113,9 +117,15 @@ macro equalsExistingType(t, T: typed, exported: static bool) =
     else: break
     objectNode = objectNode.getTypeImpl
   if objectNode.kind == nnkObjectTy:
-    result = equalsProc(T, objectNode, exported, ptrLike)
+    result = equalsProc(T, objectNode, exported, ptrLike, forwardDecl)
 
 macro equals*(body) =
+  ## generates `==` proc for object types, either as type pragma or statement,
+  ## i.e. ``type Foo {.equals.} = ...` or `equals Foo`
+  ## (or `equals *Foo` to export)
+  ## 
+  ## type pragma version will not work with recursive types,
+  ## write `equals Foo`/`equals *Foo` after type section
   if body.kind in {nnkTypeDef, nnkTypeSection, nnkStmtList}:
     result = applyTypeMacro(body, patchTypeSection)
   else:
@@ -124,4 +134,16 @@ macro equals*(body) =
     if body.kind == nnkPrefix and body[0].eqIdent"*":
       body = body[1]
       exported = true
-    result = newCall(bindSym"equalsExistingType", newCall(bindSym"default", body), body, newLit exported)
+    result = newCall(bindSym"equalsExistingType", newCall(bindSym"default", body), body, newLit exported, newLit false)
+
+macro equalsForwardDecl*(body) =
+  ## generates forward declaration of `equals`, useful for
+  ## mutually recursive types
+  ## 
+  ## used like `equalsForwardDecl T` or `equalsForwardDecl *T` (exported)
+  var body = body
+  var exported = false
+  if body.kind == nnkPrefix and body[0].eqIdent"*":
+    body = body[1]
+    exported = true
+  result = newCall(bindSym"equalsExistingType", newCall(bindSym"default", body), body, newLit exported, newLit true)

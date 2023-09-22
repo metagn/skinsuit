@@ -30,7 +30,7 @@ block:
       of true:
         b: float
 
-  proc `==`(a, b: Foo): bool {.noSideEffect.}
+  equalsForwardDecl Foo
   
   equals Bar
   equals Foo
