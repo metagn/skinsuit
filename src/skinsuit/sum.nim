@@ -2,7 +2,8 @@
 ## 
 ## Generates kind enum and objects for each case branch allowing
 ## multiple fields with the same name across branches. These objects can
-## also be made ref objects with `kind: ref _`.
+## also be made ref objects with `kind: ref _`. Each branch can also
+## individually be made a ref object via `of ref KindName`.
 ## 
 ## Also generates constructors for branches with only one field `_: sometype`.
 
@@ -83,6 +84,9 @@ proc patchTypeSection(typeSec: NimNode, poststmts: var seq[NimNode]) =
             if branch.kind != nnkOfBranch:
               error "sum type only accepts of branches", branch
             let newBranch = newNimNode(nnkOfBranch, branch)
+            let isLocalRef = branch[0].kind == nnkRefTy
+            if isLocalRef: branch[0] = branch[0][0]
+            let isRef = isRef or isLocalRef
             for j in 0 ..< branch.len - 1:
               enumBody.add(branch[j])
               newBranch.add(branch[j])

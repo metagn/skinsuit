@@ -65,7 +65,8 @@ proc collectTypeSection(n: NimNode): NimNode =
     error "expected type section", n
 
 proc applyTypeMacro*(body: NimNode, p: proc (typeSection: NimNode, poststmts: var seq[NimNode])): NimNode =
-  let inTypeSection = body.kind == nnkTypeDef
+  # statement macro would use `nnkStmtList`:
+  let inTypeSection = body.kind in {nnkTypeDef, nnkTypeSection}
   let typeSec = collectTypeSection(body)
   var poststmts: seq[NimNode]
   p(typeSec, poststmts)

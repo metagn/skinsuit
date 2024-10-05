@@ -67,7 +67,7 @@ template getUnionField*(obj: typed, field: untyped, ty: untyped): untyped =
     when field is ty:
       field
     else:
-      raise newException(FieldError, "field " & astToStr(field) & " was not of type " & $ty)
+      raise newException(FieldDefect, "field " & astToStr(field) & " was not of type " & $ty)
 
 macro setUnionField*(obj: typed, field: untyped, value: untyped): untyped =
   var objConstr: NimNode
