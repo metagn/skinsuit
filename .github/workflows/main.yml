@@ -14,7 +14,25 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: jiro4989/setup-nim-action@v1
+      - uses: jiro4989/setup-nim-action@v2
+
+      - name: install nimbleutils
+        run: nimble install -y https://github.com/metagn/nimbleutils@#HEAD
+      
+      - name: install dependencies
+        run: nimble install -y
+
+      - name: run tests
+        run: nimble tests
+
+  test-devel:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: devel
 
       - name: install nimbleutils
         run: nimble install -y https://github.com/metagn/nimbleutils@#HEAD
@@ -30,7 +48,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: jiro4989/setup-nim-action@v1
+      - uses: jiro4989/setup-nim-action@v2
 
       - name: install nimbleutils
         run: nimble install -y https://github.com/metagn/nimbleutils@#HEAD
