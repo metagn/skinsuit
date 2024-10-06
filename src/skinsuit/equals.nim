@@ -35,12 +35,13 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike, forwardDecl: b
       var needsEmptyElse = false
       for b in field[1 .. ^1]:
         let branch = copy b
-        for i in 0 ..< b.len - 1:
-          if branch[i].kind == nnkRange or
-              (branch[i].kind == nnkInfix and branch[i][0].eqIdent".."):
-            # https://github.com/nim-lang/Nim/issues/22661
-            # if the issue is fixed, this block needs to be disabled
-            needsEmptyElse = true
+        when (NimMajor, NimMinor) < (2, 2):
+          for i in 0 ..< b.len - 1:
+            if branch[i].kind == nnkRange or
+                (branch[i].kind == nnkInfix and branch[i][0].eqIdent".."):
+              # https://github.com/nim-lang/Nim/issues/22661
+              # if the issue is fixed, this block needs to be disabled
+              needsEmptyElse = true
         branch[^1] = newStmtList()
         for r in b[^1]:
           generateEquals(branch[^1], r)
