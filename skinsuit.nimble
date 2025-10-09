@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.2.4"
+version       = "0.2.5"
 author        = "metagn"
 description   = "utility macros mostly for object variants"
 license       = "MIT"
