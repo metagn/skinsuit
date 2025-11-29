@@ -109,3 +109,26 @@ block: # combined
   v = Integer(89)
   addStr(s, v)
   doAssert s == @["int 0", "float 1.2", "float 3.4", "uint 567", "int 1", "int 89"]
+
+block: # empty branch
+  type Foo = object
+    case a: bool
+    of false:
+      discard
+    else:
+      y: float
+
+  proc addStr(s: var seq[string], a: float) =
+    s.add("float " & $a)
+  proc addStr(s: var seq[string], f: Foo) {.dispatchCase: f.}
+
+  var s: seq[string]
+  var f: Foo
+  addStr(s, f)
+  f = Foo(a: true, y: 1.2)
+  addStr(s, f)
+  f.y = 3.4
+  addStr(s, f)
+  f = Foo(a: false)
+  addStr(s, f)
+  doAssert s == @["float 1.2", "float 3.4"]

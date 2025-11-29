@@ -116,17 +116,20 @@ proc doDispatchCase(arg, prc: NimNode): NimNode =
   var caseStmt = newTree(nnkCaseStmt, newDotExpr(arg, ident realBasename firstCase[0][0]))
   for b in firstCase[1..^1]:
     let fields = b[^1]
+    var newB = copy b
     if fields.kind in {nnkNilLit, nnkDiscardStmt}:
-      caseStmt.add(b)
+      newB[^1] = newTree(nnkDiscardStmt, newEmptyNode())
     else:
       expectKind fields, nnkRecList
-      if fields.len != 1 or fields[0].len != 3:
+      if fields.len == 1 and fields[0].len == 3:
+        var call = newTree(nnkCall, callTemplate)
+        call[argi] = newDotExpr(call[argi], ident realBasename fields[0][0])
+        newB[^1] = call
+      elif fields.len == 0 or (fields.len == 1 and fields[0].kind in {nnkNilLit, nnkDiscardStmt, nnkEmpty}):
+        newB[^1] = newTree(nnkDiscardStmt, newEmptyNode())
+      else:
         error("case branch has multiple fields: " & repr(b), argTyp)
-      var newB = copy b
-      var call = newTree(nnkCall, callTemplate)
-      call[argi] = newDotExpr(call[argi], ident realBasename fields[0][0])
-      newB[^1] = call
-      caseStmt.add(newB)
+    caseStmt.add(newB)
   case result[^1].kind
   of nnkEmpty: result[^1] = newStmtList()
   of nnkStmtList: discard
