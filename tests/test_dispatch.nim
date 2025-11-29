@@ -113,10 +113,8 @@ block: # combined
 block: # empty branch
   type Foo = object
     case a: bool
-    of false:
-      discard
-    else:
-      y: float
+    of false: discard
+    else: y: float
 
   proc addStr(s: var seq[string], a: float) =
     s.add("float " & $a)

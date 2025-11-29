@@ -116,19 +116,28 @@ proc doDispatchCase(arg, prc: NimNode): NimNode =
   var caseStmt = newTree(nnkCaseStmt, newDotExpr(arg, ident realBasename firstCase[0][0]))
   for b in firstCase[1..^1]:
     let fields = b[^1]
+    var field = fields
+    if field.kind == nnkRecList:
+      if field.len == 1:
+        field = field[0]
+      elif field.len != 0:
+        error("case branch has multiple fields: " & repr(b))
     var newB = copy b
-    if fields.kind in {nnkNilLit, nnkDiscardStmt}:
+    if field.kind in {nnkNilLit, nnkDiscardStmt, nnkEmpty} or (field.kind == nnkRecList and field.len == 0):
       newB[^1] = newTree(nnkDiscardStmt, newEmptyNode())
-    else:
-      expectKind fields, nnkRecList
-      if fields.len == 1 and fields[0].len == 3:
+    elif field.kind == nnkIdentDefs:
+      if field.len == 3:
         var call = newTree(nnkCall, callTemplate)
-        call[argi] = newDotExpr(call[argi], ident realBasename fields[0][0])
+        call[argi] = newDotExpr(call[argi], ident realBasename field[0])
         newB[^1] = call
-      elif fields.len == 0 or (fields.len == 1 and fields[0].kind in {nnkNilLit, nnkDiscardStmt, nnkEmpty}):
-        newB[^1] = newTree(nnkDiscardStmt, newEmptyNode())
       else:
-        error("case branch has multiple fields: " & repr(b), argTyp)
+        error("case branch has multiple fields: " & repr(b))
+    elif field.kind in {nnkSym, nnkIdent, nnkAccQuoted, nnkOpenSymChoice, nnkClosedSymChoice}:
+      var call = newTree(nnkCall, callTemplate)
+      call[argi] = newDotExpr(call[argi], ident($field))
+      newB[^1] = call
+    else:
+      error("could not understand field AST: " & repr(b))
     caseStmt.add(newB)
   case result[^1].kind
   of nnkEmpty: result[^1] = newStmtList()
