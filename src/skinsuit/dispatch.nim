@@ -28,10 +28,12 @@ runnableExamples:
 
 import macros, private/utils
 
-proc doDispatchCase(arg, prc: NimNode): NimNode =
+proc doDispatchCase(arg, prc: NimNode, exported: bool): NimNode =
   result = copy prc
   if result[0].kind == nnkPostfix:
     result[0][1] = ident repr result[0][1]
+  elif exported:
+    result[0] = newTree(nnkPostfix, ident"*", ident repr result[0])
   else:
     result[0] = ident repr result[0]
   var argi = 0
@@ -145,17 +147,19 @@ proc doDispatchCase(arg, prc: NimNode): NimNode =
   else: result[^1] = newStmtList(result[^1])
   result[^1].add caseStmt
 
-macro dispatchCaseImpl(arg: untyped, prc: typed) =
-  result = doDispatchCase(arg, prc)
+macro dispatchCaseImpl(arg: untyped, prc: typed, exported: static bool) =
+  result = doDispatchCase(arg, prc, exported)
 
 macro dispatchCase*(arg, prc) =
   case prc.kind
   of nnkStmtList:
     result = newStmtList()
     for p in prc:
-      result.add newCall(bindSym"dispatchCaseImpl", arg, prc)
+      let exported = prc.kind in RoutineNodes and prc[0].kind == nnkPostfix
+      result.add newCall(bindSym"dispatchCaseImpl", arg, prc, newLit(exported))
   else: # routine kinds
-    result = newCall(bindSym"dispatchCaseImpl", arg, prc)
+    let exported = prc.kind in RoutineNodes and prc[0].kind == nnkPostfix
+    result = newCall(bindSym"dispatchCaseImpl", arg, prc, newLit(exported))
 
 macro dispatchCase*(prc) =
   ## no specified argument to dispatch on, assumes the first argument
