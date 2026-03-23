@@ -94,7 +94,7 @@ proc equalsProc(typeName, objectNode: NimNode, doExport, ptrLike, forwardDecl: b
     pragmas = newTree(nnkPragma, ident"used", ident"noSideEffect")
   )
 
-proc patchTypeSection(typeSec: NimNode, poststmts: var seq[NimNode]) =
+proc patchTypeSectionAny(typeSec: NimNode, poststmts: var seq[NimNode], isForward: bool) =
   for td in typeSec:
     var objectNode = td[^1]
     var ptrLike = false
@@ -104,7 +104,13 @@ proc patchTypeSection(typeSec: NimNode, poststmts: var seq[NimNode]) =
     if objectNode.kind == nnkObjectTy:
       let doExport = td[0].isNodeExported
       let typeName = td[0].realBasename
-      poststmts.add(equalsProc(ident(typeName), objectNode, doExport, ptrLike, false))
+      poststmts.add(equalsProc(ident(typeName), objectNode, doExport, ptrLike, isForward))
+
+proc patchTypeSection(typeSec: NimNode, poststmts: var seq[NimNode]) =
+  patchTypeSectionAny(typeSec, poststmts, false)
+
+proc patchTypeSectionForward(typeSec: NimNode, poststmts: var seq[NimNode]) =
+  patchTypeSectionAny(typeSec, poststmts, true)
 
 macro equalsExistingType(t, T: typed, exported: static bool, forwardDecl: static bool) =
   var objectNode = t.getTypeImpl
@@ -141,10 +147,14 @@ macro equalsForwardDecl*(body) =
   ## generates forward declaration of `equals`, useful for
   ## mutually recursive types
   ## 
-  ## used like `equalsForwardDecl T` or `equalsForwardDecl *T` (exported)
-  var body = body
-  var exported = false
-  if body.kind == nnkPrefix and body[0].eqIdent"*":
-    body = body[1]
-    exported = true
-  result = newCall(bindSym"equalsExistingType", newCall(bindSym"default", body), body, newLit exported, newLit true)
+  ## used like `equalsForwardDecl T` or `equalsForwardDecl *T` (exported),
+  ## pragma version does not seem to work as it 
+  if body.kind in {nnkTypeDef, nnkTypeSection, nnkStmtList}:
+    result = applyTypeMacro(body, patchTypeSectionForward)
+  else:
+    var body = body
+    var exported = false
+    if body.kind == nnkPrefix and body[0].eqIdent"*":
+      body = body[1]
+      exported = true
+    result = newCall(bindSym"equalsExistingType", newCall(bindSym"default", body), body, newLit exported, newLit true)

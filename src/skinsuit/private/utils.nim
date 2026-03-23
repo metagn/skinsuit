@@ -74,8 +74,14 @@ proc applyTypeMacro*(body: NimNode, p: proc (typeSection: NimNode, poststmts: va
     if typeSec.len == 1 and poststmts.len == 0:
       result = typeSec[0]
     else:
-      result = newTree(nnkTypeDef, genSym(nskType, "_"), newEmptyNode(),
-        newTree(nnkStmtListType, typeSec).add(poststmts).add(bindSym"void"))
+      if (NimMajor, NimMinor) >= (2, 0):
+        result = newNimNode(nnkTypeSection, typeSec)
+        for td in typeSec: result.add td
+        result.add newTree(nnkTypeDef, genSym(nskType, "_"), newEmptyNode(),
+          newTree(nnkStmtListType).add(poststmts).add(bindSym"void"))
+      else:
+        result = newTree(nnkTypeDef, genSym(nskType, "_"), newEmptyNode(),
+          newTree(nnkStmtListType, typeSec).add(poststmts).add(bindSym"void"))
   elif poststmts.len == 0:
     result = typeSec
   else:

@@ -40,3 +40,28 @@ block:
   doAssert Foo(name: "abc", kind: false, a: 1) != Foo(name: "def", kind: false, a: 1)
   doAssert Bar(a: false, x: Foo(name: "abc")) == Bar(a: false, x: Foo(name: "abc"))
   doAssert Bar(a: false, x: Foo(name: "abc")) != Bar(a: false, x: Foo(name: "def"))
+
+block: # equalsForwardDecl pragma
+  type
+    Bar {.equalsForwardDecl.} = ref object
+      case a: bool
+      of false:
+        x: Foo
+      else:
+        discard
+    Foo {.equals.} = object
+      name: string
+      bar: Bar
+      case kind: bool
+      of false:
+        a: int
+      of true:
+        b: float
+  
+  equals Bar
+  
+  doAssert Foo(name: "abc", kind: false, a: 1) == Foo(name: "abc", kind: false, a: 1)
+  doAssert Foo(name: "abc", kind: false, a: 1) != Foo(name: "abc", kind: true, b: 1)
+  doAssert Foo(name: "abc", kind: false, a: 1) != Foo(name: "def", kind: false, a: 1)
+  doAssert Bar(a: false, x: Foo(name: "abc")) == Bar(a: false, x: Foo(name: "abc"))
+  doAssert Bar(a: false, x: Foo(name: "abc")) != Bar(a: false, x: Foo(name: "def"))
