@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.2.6"
+version       = "0.3.0"
 author        = "metagn"
 description   = "utility macros mostly for object variants"
 license       = "MIT"
@@ -18,7 +18,7 @@ when (NimMajor, NimMinor) >= (1, 4):
 
 task docs, "build docs for all modules":
   when declared(buildDocs):
-    buildDocs(gitUrl = "https://github.com/metagn/skinsuit")
+    buildDocs(gitUrl = "https://github.com/holo-nim/skinsuit")
   else:
     echo "docs task not implemented, need nimbleutils"
 
