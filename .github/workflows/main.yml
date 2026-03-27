@@ -23,7 +23,7 @@ jobs:
         run: nimble install -y
 
       - name: run tests
-        run: nimble tests
+        run: nim r tasks/run_tests.nim
 
   test-devel:
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
         run: nimble install -y
 
       - name: run tests
-        run: nimble tests
+        run: nim r tasks/run_tests.nim
   
   docs:
     runs-on: ubuntu-latest
@@ -57,7 +57,7 @@ jobs:
         run: nimble install -y
       
       - name: compile docs
-        run: nimble docs
+        run: nim r tasks/build_docs.nim
       
       - name: move to subfolder
         run: |
